@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2019 LG Electronics, Inc.
+// Copyright (c) 2011-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -871,8 +871,8 @@ _timeout_delete(const char *app_id, const char *key, bool public_bus)
         return false;
     }
 
-    sqlite3_bind_text(st, 1, app_id, app_id ? strlen(app_id) : -1, SQLITE_STATIC);
-    sqlite3_bind_text(st, 2, key, key ? strlen(key) : -1, SQLITE_STATIC);
+    sqlite3_bind_text(st, 1, app_id, strlen(app_id), SQLITE_STATIC);
+    sqlite3_bind_text(st, 2, key, strlen(key), SQLITE_STATIC);
     sqlite3_bind_int(st, 3, public_bus);
 
     return _sql_step_finalize(__func__, st);
@@ -982,7 +982,7 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 
     char *app_id = NULL;
 
-    bool public_bus;
+    bool public_bus = false;
     AlarmTimeoutType timeout_type;
     struct json_object *object;
     struct json_object *duration_object;
@@ -991,6 +991,8 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
     // for optional "keep_existing" boolean argument
     bool keep_existing_provided;
     bool keep_existing = false;
+    char *escaped_key = NULL;
+    bool kept_existing = false;
     struct json_object *keep_existing_object;
 
     object = json_tokener_parse(LSMessageGetPayload(message));
@@ -1197,7 +1199,6 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
 
     calendar = (timeout_type == AlarmTimeoutCalendar);
 
-    bool kept_existing = false;
     char *payload;
 
     if (keep_existing && _timeout_exists(app_id, key, public_bus))
@@ -1221,7 +1222,7 @@ _alarm_timeout_set(LSHandle *sh, LSMessage *message, void *ctx)
         }
     }
 
-    char *escaped_key = g_strescape(key, NULL);
+    escaped_key = g_strescape(key, NULL);
 
     if (keep_existing_provided)
     {
@@ -1313,7 +1314,7 @@ _alarm_timeout_clear(LSHandle *sh, LSMessage *message, void *ctx)
     struct json_object *object;
     const char *app_instance_id;
     const char *key = NULL;
-    bool public_bus;
+    bool public_bus = false;
     LSError lserror;
     LSErrorInit(&lserror);
 
@@ -1431,7 +1432,7 @@ _alarms_timeout_init(void)
     }
 
     gchar *timeout_db_path = g_path_get_dirname(timeout_db_name);
-    g_mkdir_with_parents(timeout_db_path, S_IRWXU);
+    (void)g_mkdir_with_parents(timeout_db_path, S_IRWXU);
     g_free(timeout_db_path);
 
     retVal = smart_sql_open(timeout_db_name, &timeout_db);
