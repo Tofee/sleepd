@@ -10,7 +10,7 @@
 },
 {
 "service":"com.webos.service.alarm",
-"outbound":["com.palm.sleep", "com.webos.service.power", "com.webos.service.alarm"]
+"outbound":["com.palm.sleep", "com.webos.service.power", "com.webos.service.alarm", "com.webos.service.systemservice"]
 },
 {
 "service":"com.webos.service.power",
